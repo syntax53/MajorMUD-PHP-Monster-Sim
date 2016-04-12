@@ -20,7 +20,7 @@ function AddAttack($name, $type, $energy, $min, $max, $attack_chance, $success_c
 	$attacks[$i]['max'] = $max;
 	$attacks[$i]['attack_chance'] = $attack_chance;
 	$attacks[$i]['success_chance'] = $success_chance;
-	$attacks[$i]['used'] = 0;
+	$attacks[$i]['attempted'] = 0;
 	$attacks[$i]['hits'] = 0;
 	$attacks[$i]['resistable'] = $resistable;
 	$attacks[$i]['damage_resisted'] = 0;
@@ -221,7 +221,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 					
 				} else {
 					
-					$attacks[$attack_num]['used']++;
+					$attacks[$attack_num]['attempted']++;
 					$attacks[$attack_num]['remaining_energy_yes'] += $remaining_energy;
 					$total_attacks++;
 					
@@ -270,7 +270,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 										//DAMAGE = DAMAGE - ( DAMAGE * IF( MR>150 , 0.75 , MR/200 ) )
 										$mr_reduction = (float)($character_mr > 150 ? 0.75 : round($character_mr/200, 2) );
 									}
-									$mr_reduction = floor($damage * $mr_reduction);
+									$mr_reduction = ($damage * $mr_reduction);
 									
 									$attacks[$attack_num]['damage_resisted'] += $mr_reduction;
 									$damage -= $mr_reduction;
@@ -357,18 +357,23 @@ if (!empty($attacks)):
 <tr>
 	<td><span class="bold"><?php echo $attack['name']; ?></span></td><!-- Name -->
     <td><?php echo ($attack['attack_chance']-$last_cast_percent); ?>%</td><!-- Initial Cast -->
-    <td><span class="magenta bold"><?php echo (round($attack['used']/$total_attacks, 3)*100); ?>%</span></td><!-- True Cast -->
-    <td><span class="red"><?php echo round($attack['total_damage']/$attack['used'],2); ?></span></td><!-- Avg Attempt -->
-    <td><?php echo round($attack['used']/$number_of_rounds, 2); ?></td><!-- Attempts/Round -->
+    <td><span class="magenta bold"><?php echo (round($attack['attempted']/$total_attacks, 3)*100); ?>%</span></td><!-- True Cast -->
+    <td><span class="red"><?php echo round($attack['total_damage']/$attack['attempted'],2); ?></span></td><!-- Avg Attempt -->
+    <td><?php echo round($attack['attempted']/$number_of_rounds, 2); ?></td><!-- Attempts/Round -->
     <td><span class="red bold"><?php echo round($attack['total_damage']/$number_of_rounds,2); ?></span></td><!-- Avg Round -->
-    <td><?php echo $attack['used']; ?></td><!-- Attempts -->
+    <td><?php echo $attack['attempted']; ?></td><!-- Attempts -->
     <td><?php echo $attack['hits']; ?></td><!-- Hits -->
-    <td><span class="green bold"><?php echo round($attack['hits']/$attack['used'], 3)*100; ?>%</span></td><!-- Success% -->
+    <td><span class="green bold"><?php echo round($attack['hits']/$attack['attempted'], 3)*100; ?>%</span></td><!-- Success% -->
     <td><?php echo $attack['total_damage']; ?></td><!-- Total Dmg -->
     <td><?php echo $attack['damage_resisted']; ?></td><!-- DMG Resisted -->
     <td><?php echo $attack['total_damage'] > 0 ? round($attack['damage_resisted']/($attack['damage_resisted']+$attack['total_damage']), 3)*100 : 100; ?>%</td><!-- % DMG Resisted -->
     <td><?php echo $attack['attempt_dodged_resisted']; ?></td><!-- Resisted / Dodged -->
-    <td><?php echo round(($attack['attempt_dodged_resisted']/$attack['used']), 3)*100; ?>%</td><!-- % Resisted / Blocked -->
+    <td><?php echo round(
+		(
+			$attack['attempt_dodged_resisted'] /
+			($attack['type'] == 'spell' ? $attack['attempted'] : ($attack['hits'] + $attack['attempt_dodged_resisted']) )
+		)
+		, 3)*100; ?>%</td><!-- % Resisted / Blocked -->
 </tr>
 <?php $last_cast_percent = $attack['attack_chance']; endforeach; ?>
 </table>
@@ -381,20 +386,20 @@ foreach ($attacks as $attack) {
 	p('<strong>'.$attack['name'].'--</strong>');
 	p('Hits: '.$attack['hits'].', '
 		.($attack['type'] == 'spell' ? $attack['attempt_dodged_resisted'] > 0 ? 'Resists: '
-		.$attack['attempt_dodged_resisted'].' ('.(round(($attack['attempt_dodged_resisted']/$attack['used']), 3)*100).'%), Fails' : 'Fails' : 'Misses').': '
-		.($attack['used']-$attack['hits']).', Success %: '.(round($attack['hits']/$attack['used'], 3)*100));
+		.$attack['attempt_dodged_resisted'].' ('.(round(($attack['attempt_dodged_resisted']/$attack['attempted']), 3)*100).'%), Fails' : 'Fails' : 'Misses').': '
+		.($attack['attempted']-$attack['hits']).', Success %: '.(round($attack['hits']/$attack['attempted'], 3)*100));
 	
 	p('Total Damage: '.$attack['total_damage']
 		.($attack['damage_resisted'] > 0 ? ' (Damage Resisted: '.$attack['damage_resisted'].', '
 		.($attack['total_damage'] > 0 ? (round($attack['damage_resisted']/($attack['damage_resisted']+$attack['total_damage']), 3)*100) : 100).'%)': ''));
 	
 	p('');
-	p(damage('Average Damage/'.($attack['type'] == 'spell' ? (($attack['used'] > $attack['hits']) ? 'Cast (including fails)':'Cast') : 'Swing').': '.round($attack['total_damage']/$attack['used'],2)));
-	p('Average '.($attack['type'] == 'spell' ? 'Casts' : 'Swings').'/Round: '.round($attack['used']/$number_of_rounds,2));
+	p(damage('Average Damage/'.($attack['type'] == 'spell' ? (($attack['attempted'] > $attack['hits']) ? 'Cast (including fails)':'Cast') : 'Swing').': '.round($attack['total_damage']/$attack['attempted'],2)));
+	p('Average '.($attack['type'] == 'spell' ? 'Casts' : 'Swings').'/Round: '.round($attack['attempted']/$number_of_rounds,2));
 	p(damage('Average Damage/Round: '.round($attack['total_damage']/$number_of_rounds,2)));
 	p('');
 	p('Initial Attack Chance: '.($attack['attack_chance']-$last_cast_percent).'%');
-	p('<strong><span style="color:#F006FF;">True Attack Chance: '.(round($attack['used']/$total_attacks, 3)*100).'%</span></strong>');
+	p('<strong><span style="color:#F006FF;">True Attack Chance: '.(round($attack['attempted']/$total_attacks, 3)*100).'%</span></strong>');
 	$last_cast_percent = $attack['attack_chance'];
 }*/
 
@@ -411,9 +416,9 @@ foreach ($attacks as $attack) {
 	if ($attack['no_energy'] > 0) {
 		p('');
 		p('<span class="bold">'.$attack['name'].'--</span>');
-		p('Attack chosen but not enough energy: '.$attack['no_energy'].' times, '.(round($attack['no_energy']/($attack['no_energy']+$attack['used']), 4)*100).'%');
-		p('Average energy available when attack used: '.(round($attack['remaining_energy_yes']/$attack['used'], 0)));
-		p('Average energy available when attack could not be used: '.(round($attack['remaining_energy_no']/$attack['no_energy'], 0)));
+		p('Attack chosen but not enough energy: '.$attack['no_energy'].' times, '.(round($attack['no_energy']/($attack['no_energy']+$attack['attempted']), 4)*100).'%');
+		p('Average energy available when attack attempted: '.(round($attack['remaining_energy_yes']/$attack['attempted'], 0)));
+		p('Average energy available when attack could not be attempted: '.(round($attack['remaining_energy_no']/$attack['no_energy'], 0)));
 	}
 }
 p('');
