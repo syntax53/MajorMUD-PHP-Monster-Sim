@@ -1,5 +1,7 @@
 <?php
 
+// for this to work, set megamud to issue a "^M" every 3 seconds
+
 function remove_badchars($string){ 
     $ret = ""; $badchars = array(69,91,97,254);
 	for ($x = 101; $x <= 117; $x++) { $badchars[] = $x;	}
@@ -43,23 +45,23 @@ $i++; $attacks[$i][1] = 'LASH'; $attacks[$i][2] = 'SOURCE lashes you with its ta
 $i++; $attacks[$i][1] = 'WHIP'; $attacks[$i][2] = 'SOURCE whips you for DMG damage!'; $attacks[$i][3] = 'SOURCE lashes out at you with their hellfire whip!';
 $i++; $attacks[$i][1] = 'SLASH'; $attacks[$i][2] = 'SOURCE slashes you for DMG damage!'; $attacks[$i][3] = 'SOURCE swings at you with their SOURCE!';
 
-$i++; $attacks[$i][1] = 'HEAL'; $attacks[$i][2] = 'The room casts room heal on you, healing DMG damage!';
-								$attacks[$i][3] = 'AAAAAAA';
+$standard_spells = array();
+$standard_spells['LBOL'] = "lbol";
+$standard_spells['LBOLT'] = "lightning bolt";
+$standard_spells['SBOLT'] = "sunbolt";
+$standard_spells['MBLAST'] = "magma blast";
+foreach ($standard_spells as $short_name => $long_name) {
+	$i++;
+	$attacks[$i][1] = $short_name;
+	$attacks[$i][2] = 'SOURCE MSGTEXT '.$long_name.' at you for DMG damage!';
+	$attacks[$i][3] = 'SOURCE attempted to cast '.$long_name.' at you, but failed.';
+	$attacks[$i][4] = 'You resisted SOURCE cast of '.$long_name;
+}
 
-$i++; $attacks[$i][1] = 'LBOL'; $attacks[$i][2] = 'SOURCE fires a lbol at you for DMG damage!';
-								$attacks[$i][3] = 'SOURCE attempted to cast lbol at you, but failed.'; $attacks[$i][4] = 'You resisted SOURCE cast of lbol';
-
-$i++; $attacks[$i][1] = 'LBOL'; $attacks[$i][2] = 'SOURCE fires a lightning bolt at you for DMG damage!';
-								$attacks[$i][3] = 'SOURCE attempted to cast lightning bolt at you, but failed.'; $attacks[$i][4] = 'You resisted SOURCE cast of lightning bolt';
+$i++; $attacks[$i][1] = 'HEAL'; $attacks[$i][2] = 'The room casts room heal on you, healing DMG damage!'; $attacks[$i][3] = 'AAAAAAA';
 
 $i++; $attacks[$i][1] = 'HSTORM'; $attacks[$i][2] = 'A hellish storm of fire and brimstone scorches you for DMG damage!';
-								  $attacks[$i][3] = 'SOURCE attempted to cast hell storm, but failed.'; $attacks[$i][4] = 'You resisted SOURCE cast of hell storm';
-
-$i++; $attacks[$i][1] = 'MBLAST'; $attacks[$i][2] = 'SOURCE launches a magma blast at you for DMG damage!';
-								  $attacks[$i][3] = 'AAAAAAA'; $attacks[$i][4] = 'You resisted SOURCE cast of magma blast';
-
-$i++; $attacks[$i][1] = 'SBOLT'; $attacks[$i][2] = 'SOURCE fires a sunbolt at you for DMG damage!';
-								 $attacks[$i][3] = 'SOURCE attempted to cast sunbolt at you, but failed.'; $attacks[$i][4] = 'You resisted SOURCE cast of sunbolt';
+								  $attacks[$i][3] = 'SOURCE attempted to cast hellstorm, but failed.'; $attacks[$i][4] = 'You resisted SOURCE cast of hellstorm';
 
 
 if (!empty($capture_data)) {
@@ -151,12 +153,14 @@ if (!empty($capture_data)) {
 		}
 		
 		$miss = str_replace('SOURCE', '[ a-zA-Z0-9\']+', preg_quote($attack[3], '/'));
+		$miss = str_replace('MSGTEXT', '[ a-zA-Z\']+', $miss);
 		$capture_data = preg_replace("/.*".$miss.$deflect.".*/", 'PARSED_'.$attack[1].$num.',0,deflect', $capture_data);
 		$capture_data = preg_replace("/.*".$miss.".*/", 'PARSED_'.$attack[1].$num.',0,miss/fail', $capture_data);
 		
 		$hit = preg_quote($attack[2], '/');
 		$hit = str_replace('SOURCE', '[ a-zA-Z0-9\']+', $hit);
 		$hit = str_replace('DMG', '(\d+)', $hit);
+		$hit = str_replace('MSGTEXT', '[ a-zA-Z\']+', $hit);
 		
 		$capture_data = preg_replace("/.*".$hit.".*/", 'PARSED_'.$attack[1].$num.',$1', $capture_data);
 	}
@@ -188,10 +192,29 @@ if (!empty($capture_data)) {
 			$capture_data = preg_replace("/(?:NEWROUND..?((?:HEAL[a-zA-Z0-9\\,]+..?)+))NEWROUND/s", '$1NEWROUND', $capture_data);
 		}
 		
-		$capture_data = trim($capture_data);
-		if (substr($capture_data, 0, strlen('NEWROUND')) != 'NEWROUND') $capture_data = "NEWROUND\n".$capture_data;
-		if (substr($capture_data, strlen('NEWROUND')*-1, strlen('NEWROUND')) == 'NEWROUND') $capture_data = substr($capture_data, 0, strlen($capture_data)-strlen('NEWROUND'));
-		$capture_data = trim($capture_data);
+		//add round numbers, remove "newround"
+		$round = 1; $first_lines_in_round = true;
+		$captured_data_lines = split("\r\n", trim($capture_data));
+		$max_index = count($captured_data_lines)-1;
+		for ($x = 0; $x <= $max_index; $x++) {
+			if (trim($captured_data_lines[$x]) == "NEWROUND") {
+				unset($captured_data_lines[$x]);
+				if ($x > 0) $round++;
+				$first_lines_in_round = true; continue;
+			}
+			$captured_data_lines[$x] = trim($captured_data_lines[$x]);
+			if (!empty($captured_data_lines[$x])) {
+				//put heals at end of rounds and not at beginning of next
+				if ($first_lines_in_round && substr($captured_data_lines[$x], 0, strlen('HEAL')) == 'HEAL') {
+					$captured_data_lines[$x] = ($round-1).','.$captured_data_lines[$x];
+				} else {
+					$captured_data_lines[$x] = $round.','.$captured_data_lines[$x];
+					$first_lines_in_round = FALSE;
+				}
+			}
+		}
+		$capture_data = implode("\r\n", $captured_data_lines);
+		$capture_data = "Round,Attack,DMG,Note\r\n".$capture_data;
 		
 		header('Content-Disposition: attachment; filename="'.str_ireplace(array('.txt','.cap'), '', $capture_file_name).'.csv"');
 		header('Content-Type: text/plain'); # Don't use application/force-download - it's not a real MIME type, and the Content-Disposition header is sufficient
