@@ -344,8 +344,8 @@ if (!empty($attacks)):
     <th>Avg Attempt</th>
     <th>Attempts<br>/ Round</th>
     <th>Avg Round</th>
+   	<th>Attempts</th>
     <th>Hits</th>
-    <th>Misses, Fails<br>&amp; Resists</th>
     <th>Success%</th>
     <th>DMG<br>Taken</th>
     <th>DMG<br>Resisted</th>
@@ -361,8 +361,8 @@ if (!empty($attacks)):
     <td><span class="red"><?php echo round($attack['total_damage']/$attack['used'],2); ?></span></td><!-- Avg Attempt -->
     <td><?php echo round($attack['used']/$number_of_rounds, 2); ?></td><!-- Attempts/Round -->
     <td><span class="red bold"><?php echo round($attack['total_damage']/$number_of_rounds,2); ?></span></td><!-- Avg Round -->
+    <td><?php echo $attack['used']; ?></td><!-- Attempts -->
     <td><?php echo $attack['hits']; ?></td><!-- Hits -->
-    <td><?php echo ($attack['used']-$attack['hits']); ?></td><!-- Misses -->
     <td><span class="green bold"><?php echo round($attack['hits']/$attack['used'], 3)*100; ?>%</span></td><!-- Success% -->
     <td><?php echo $attack['total_damage']; ?></td><!-- Total Dmg -->
     <td><?php echo $attack['damage_resisted']; ?></td><!-- DMG Resisted -->
