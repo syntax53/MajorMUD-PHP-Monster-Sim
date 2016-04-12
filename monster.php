@@ -250,27 +250,29 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 								if (($attack['resistable'] == 1 && $character_antimagic == 1) || $attack['resistable'] == 2) {
 									//if( TYPEofRESIST=Never , 0 , IF( ANTI_MAGIC=Yes or TYPEofRESIST=Yes , IF( MR>196 , 0.98 , MR/200 ) , 0 ) )
 									$resist_chance = mt_rand(1,100);
-									if ( $resist_chance <= ($character_mr/2) ) {
+									if ( $resist_chance <= (($character_mr > 196 ? 196 : $character_mr)/2) ) {
 										$attacks[$attack_num]['cast_resisted']++; $total_resisted++;
 										$damage = 0; $attack_hit = false; $resisted = true;
 									}
 								}
 								
 								if ($attack_hit) {	
-									if ($character_antimagic == 1) {
+									if ($character_antimagic == 0) {
 										//DAMAGE = DAMAGE - ( DAMAGE * IF( MR<50, (MR-50)/100, IF( MR>150, 0.5, (MR-50)/200 ) ) )
-										$mr_reduction = round( $damage * ( $character_mr < 50 ? ($character_mr-50)/100 : $character_mr > 150 ? 0.5 : ($character_mr-50)/200 ) );
+										$mr_reduction = (float)($character_mr < 50 ? round(($character_mr-50)/100, 2) : $character_mr > 150 ? 0.5 : round(($character_mr-50)/200, 2) );
 									} else {
 										//DAMAGE = DAMAGE - ( DAMAGE * IF( MR>150 , 0.75 , MR/200 ) )
-										$mr_reduction = round( $damage * ( $character_mr > 150 ? 0.75 : $character_mr/200 ) );
+										$mr_reduction = (float)($character_mr > 150 ? 0.75 : round($character_mr/200, 2) );
 									}
+									$mr_reduction = floor($damage * $mr_reduction);
+									
 									$attacks[$attack_num]['damage_resisted'] += $mr_reduction;
 									$damage -= $mr_reduction;
 								}
 							}
 						} else {
-							$attacks[$attack_num]['damage_resisted'] += $character_dr;
-							$damage -= $character_dr;
+							$attacks[$attack_num]['damage_resisted'] += ($character_dr/2);
+							$damage -= ($character_dr/2);
 						}
 						if ($damage <= 0) {
 							if ($attack['type'] != 'spell') $glance = true;
@@ -332,12 +334,12 @@ foreach ($attacks as $attack) {
 	p('<strong>'.$attack['name'].'--</strong>');
 	p('Hits: '.$attack['hits'].', '
 		.($attack['type'] == 'spell' ? $attack['cast_resisted'] > 0 ? 'Resists: '
-		.$attack['cast_resisted'].' ('.round(($attack['cast_resisted']/$attack['used'])*100, 1).'%), Fails' : 'Fails' : 'Misses').': '
-		.($attack['used']-$attack['hits']).', Success %: '.(round($attack['hits']/$attack['used'],3)*100));
+		.$attack['cast_resisted'].' ('.(round(($attack['cast_resisted']/$attack['used']), 3)*100).'%), Fails' : 'Fails' : 'Misses').': '
+		.($attack['used']-$attack['hits']).', Success %: '.(round($attack['hits']/$attack['used'], 3)*100));
 	
 	p('Total Damage: '.$attack['total_damage']
 		.($attack['damage_resisted'] > 0 ? ' (Damage Resisted: '.$attack['damage_resisted'].', '
-		.($attack['total_damage'] > 0 ? round(($attack['damage_resisted']/$attack['total_damage'])*100, 1) : 100).'%)': ''));
+		.($attack['total_damage'] > 0 ? (round($attack['damage_resisted']/($attack['damage_resisted']+$attack['total_damage']), 3)*100) : 100).'%)': ''));
 	
 	p('');
 	p(damage('Average Damage/'.($attack['type'] == 'spell' ? (($attack['used'] > $attack['hits']) ? 'Cast (including fails)':'Cast') : 'Swing').': '.round($attack['total_damage']/$attack['used'],2)));
@@ -345,7 +347,7 @@ foreach ($attacks as $attack) {
 	p(damage('Average Damage/Round: '.round($attack['total_damage']/$number_of_rounds,2)));
 	p('');
 	p('Initial Attack Chance: '.($attack['attack_chance']-$last_cast_percent).'%');
-	p('<strong><span style="color:#F006FF;">True Attack Chance: '.(round($attack['used']/$total_attacks,3)*100).'%</span></strong>');
+	p('<strong><span style="color:#F006FF;">True Attack Chance: '.(round($attack['used']/$total_attacks, 3)*100).'%</span></strong>');
 	$last_cast_percent = $attack['attack_chance'];
 }
 
