@@ -24,7 +24,7 @@ function AddAttack($name, $type, $energy, $min, $max, $attack_chance, $success_c
 	$attacks[$i]['hits'] = 0;
 	$attacks[$i]['resistable'] = $resistable;
 	$attacks[$i]['damage_resisted'] = 0;
-	$attacks[$i]['attempt_blocked'] = 0;
+	$attacks[$i]['attempt_dodged_resisted'] = 0;
 	$attacks[$i]['no_energy'] = 0;
 	$attacks[$i]['remaining_energy_yes'] = 0;
 	$attacks[$i]['remaining_energy_no'] = 0;
@@ -245,7 +245,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 						$attack_hit = true;
 						if ($attack['type'] != 'spell' && $character_dodge > 0) {
 							$dodge_chance = mt_rand(1,100);
-							if ($character_dodge <= $dodge_chance) { $attack_hit = false; $dodged = true; $total_dodge++; }
+							if ($dodge_chance <= $character_dodge) { $attack_hit = false; $dodged = true; $attacks[$attack_num]['attempt_dodged_resisted']++; $total_dodge++; }
 						}
 					}
 					
@@ -257,7 +257,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 									//if( TYPEofRESIST=Never , 0 , IF( ANTI_MAGIC=Yes or TYPEofRESIST=Yes , IF( MR>196 , 0.98 , MR/200 ) , 0 ) )
 									$resist_chance = mt_rand(1,100);
 									if ( $resist_chance <= (($character_mr > 196 ? 196 : $character_mr)/2) ) {
-										$attacks[$attack_num]['attempt_blocked']++; $total_resisted++;
+										$attacks[$attack_num]['attempt_dodged_resisted']++; $total_resisted++;
 										$damage = 0; $attack_hit = false; $resisted = true;
 									}
 								}
@@ -281,7 +281,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 							$damage -= ($character_dr/2);
 						}
 						if ($damage <= 0) {
-							if ($attack['type'] != 'spell') { $glance = true; $attacks[$attack_num]['attempt_blocked']++; }
+							if ($attack['type'] != 'spell') $glance = true;
 							$damage = 0;
 						}
 						
@@ -350,8 +350,8 @@ if (!empty($attacks)):
     <th>DMG<br>Taken</th>
     <th>DMG<br>Resisted</th>
     <th>% DMG<br>Resisted</th>
-    <th># Resisted<br>/ Blocked</th>
-    <th>% Resisted<br>/ Blocked</th>
+    <th># Resisted<br>/ Dodged</th>
+    <th>% Resisted<br>/ Dodged</th>
 </tr>
 <?php $last_cast_percent = 0; foreach ($attacks as $attack): ?>
 <tr>
@@ -367,8 +367,8 @@ if (!empty($attacks)):
     <td><?php echo $attack['total_damage']; ?></td><!-- Total Dmg -->
     <td><?php echo $attack['damage_resisted']; ?></td><!-- DMG Resisted -->
     <td><?php echo $attack['total_damage'] > 0 ? round($attack['damage_resisted']/($attack['damage_resisted']+$attack['total_damage']), 3)*100 : 100; ?>%</td><!-- % DMG Resisted -->
-    <td><?php echo $attack['attempt_blocked']; ?></td><!-- Resisted / Blocked -->
-    <td><?php echo round(($attack['attempt_blocked']/$attack['used']), 3)*100; ?>%</td><!-- % Resisted / Blocked -->
+    <td><?php echo $attack['attempt_dodged_resisted']; ?></td><!-- Resisted / Dodged -->
+    <td><?php echo round(($attack['attempt_dodged_resisted']/$attack['used']), 3)*100; ?>%</td><!-- % Resisted / Blocked -->
 </tr>
 <?php $last_cast_percent = $attack['attack_chance']; endforeach; ?>
 </table>
@@ -380,8 +380,8 @@ Total Rounds: <?php echo $number_of_rounds; ?>, Total Attacks: <?php echo $total
 foreach ($attacks as $attack) {	
 	p('<strong>'.$attack['name'].'--</strong>');
 	p('Hits: '.$attack['hits'].', '
-		.($attack['type'] == 'spell' ? $attack['attempt_blocked'] > 0 ? 'Resists: '
-		.$attack['attempt_blocked'].' ('.(round(($attack['attempt_blocked']/$attack['used']), 3)*100).'%), Fails' : 'Fails' : 'Misses').': '
+		.($attack['type'] == 'spell' ? $attack['attempt_dodged_resisted'] > 0 ? 'Resists: '
+		.$attack['attempt_dodged_resisted'].' ('.(round(($attack['attempt_dodged_resisted']/$attack['used']), 3)*100).'%), Fails' : 'Fails' : 'Misses').': '
 		.($attack['used']-$attack['hits']).', Success %: '.(round($attack['hits']/$attack['used'], 3)*100));
 	
 	p('Total Damage: '.$attack['total_damage']
