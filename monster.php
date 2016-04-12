@@ -49,7 +49,7 @@ if (isset($_POST['name'])) {
 		$energy = (int)preg_replace("/[^0-9]/", '', $_POST['energy'][$index]);
 		$min = (int)preg_replace("/[^0-9]/", '', $_POST['min'][$index]);
 		$max = (int)preg_replace("/[^0-9]/", '', $_POST['max'][$index]);
-		$resistable = (int)preg_replace("/[^0-9]/", '', $_POST['resistable'][$index]);
+		$resistable = (int)preg_replace("/[^0-2]/", '', $_POST['resistable'][$index]);
 		$attack_chance = (int)preg_replace("/[^0-9]/", '', $_POST['attack_chance'][$index]);
 		$success_chance = (int)preg_replace("/[^0-9]/", '', $_POST['success_chance'][$index]);
 		if (!empty($name) && $energy > 0 && $max > 0 && $attack_chance > 0 && $success_chance > 0) {
