@@ -186,7 +186,7 @@ for ($x = 2; $x <= count($attacks); $x++) {
 }
 
 ob_start();
-p('==============================================');
+p('===============================================================');
 
 $energy_stats['remaining_per_attack'] = 0;
 $energy_stats['remaining_after_attack'] = array(1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0, 6 => 0);
@@ -330,7 +330,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 	if ($remaining_energy > $energy_stats['max_remaining']) $energy_stats['max_remaining'] = $remaining_energy;
 	$energy_stats['total_remaining'] += $remaining_energy;
 	
-	p('==============================================');
+	p('===============================================================');
 }
 $attack_html = ob_get_clean();
 
@@ -433,8 +433,9 @@ for ($x = 1; $x <= 6; $x++) {
 
 if (!isset($_POST['submit_hide_rounds'])) {
 	if ($number_of_rounds <= 5000) {
-		p('');
+		p('<PRE>');
 		echo $attack_html;
+		p('</PRE>');
 	}
 }
 
