@@ -61,8 +61,8 @@ foreach ($standard_spells as $short_name => $long_name) {
 $i++; $attacks[$i][1] = 'HEAL'; $attacks[$i][2] = 'The room casts room heal on you, healing DMG damage!'; $attacks[$i][3] = 'AAAAAAA';
 
 $i++; $attacks[$i][1] = 'HSTORM'; $attacks[$i][2] = 'A hellish storm of fire and brimstone scorches you for DMG damage!';
-								  $attacks[$i][3] = 'SOURCE attempted to cast hellstorm, but failed.'; $attacks[$i][4] = 'You resisted SOURCE cast of hellstorm';
-
+								  $attacks[$i][3] = 'SOURCE attempted to cast hellstorm, but failed.';
+								  $attacks[$i][4] = 'You resisted SOURCE cast of hellstorm';
 
 if (!empty($capture_data)) {
 	$capture_data = preg_replace("/.*Obvious exits\:.*/", 'NEWROUND', $capture_data);
