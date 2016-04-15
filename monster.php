@@ -265,10 +265,10 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 								if ($attack_hit) {	
 									if ($character_antimagic == 0) {
 										//DAMAGE = DAMAGE - ( DAMAGE * IF( MR<50, (MR-50)/100, IF( MR>150, 0.5, (MR-50)/200 ) ) )
-										$mr_reduction = (float)($character_mr < 50 ? round(($character_mr-50)/100, 2) : $character_mr > 150 ? 0.5 : round(($character_mr-50)/200, 2) );
+										$mr_reduction = ($character_mr < 50 ? round(($character_mr-50)/100, 2) : ($character_mr > 150 ? 0.5 : round(($character_mr-50)/200, 2)) );
 									} else {
 										//DAMAGE = DAMAGE - ( DAMAGE * IF( MR>150 , 0.75 , MR/200 ) )
-										$mr_reduction = (float)($character_mr > 150 ? 0.75 : round($character_mr/200, 2) );
+										$mr_reduction = ($character_mr > 150 ? 0.75 : round($character_mr/200, 2) );
 									}
 									$mr_reduction = ($damage * $mr_reduction);
 									
