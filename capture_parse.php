@@ -64,6 +64,17 @@ $i++; $attacks[$i][1] = 'HSTORM'; $attacks[$i][2] = 'A hellish storm of fire and
 								  $attacks[$i][3] = 'SOURCE attempted to cast hellstorm, but failed.';
 								  $attacks[$i][4] = 'You resisted SOURCE cast of hellstorm';
 
+$between_rounds = array(); $i=1;
+$i++; $between_rounds[$i][0] = 'WIND'; $between_rounds[$i][1] = 'The SOURCE flaps its wings and a gust of wind knocks you to the ground!';
+$i++; $between_rounds[$i][0] = 'CHAINS'; $between_rounds[$i][1] = 'Glowing silver manacles clamp around your wrists!';
+
+$regular_line_strips = array();
+function AddStrip($text_or_arr) {
+	global $regular_line_strips;
+	if (!is_array($text_or_arr)) $text_or_arr = array($text_or_arr);
+	foreach ($text_or_arr as $text) { $regular_line_strips[] = $text; }
+}
+
 if (!empty($capture_data)) {
 	$capture_data = preg_replace("/.*Obvious exits\:.*/", 'NEWROUND', $capture_data);
 	
@@ -72,64 +83,22 @@ if (!empty($capture_data)) {
 	
 	//regex strips
 	$capture_data = preg_replace("/.*\\[HP\\=\\d+[a-zA-Z0-9\\(\\)\\s]*\\]\\:.*/", '', $capture_data);
-	$capture_data = preg_replace("/.*You gain \\d+ experience.*/", '', $capture_data);
-	$capture_data = preg_replace("/.*The [a-zA-Z0-9\\s]+ falls to the ground.*/", '', $capture_data);
-	$capture_data = preg_replace("/.*You [a-zA-Z0-9\\s]+ for \\d+ damage\!*/", '', $capture_data);
-	$capture_data = preg_replace("/.*You notice [a-zA-Z0-9\\s]+ here.*/", '', $capture_data);
 	$capture_data = preg_replace("/.*[a-zA-Z0-9\\\\\\/\\:\\s]+   [a-zA-Z0-9\\\\\\/\\:\\s]+   .*/", '', $capture_data);
-	$capture_data = preg_replace("/.*e healed\\..*/", '', $capture_data);
 	
-	$regular_line_strips = array();
-	$regular_line_strips[] = 'Also here:';
-	$regular_line_strips[] = 'You hear movement ';
-	$regular_line_strips[] = ' into the room from ';
-	$regular_line_strips[] = ' just entered the Realm';
-	$regular_line_strips[] = ' just left the Realm';
-	$regular_line_strips[] = ' just hung up';
-	$regular_line_strips[] = ' peeks in from ';
-	$regular_line_strips[] = 'the server will be shutting';
-	$regular_line_strips[] = 'nightly "auto-cleanup"';
-	$regular_line_strips[] = 'Please finish up and log off';
-	$regular_line_strips[] = 'Software caused connection abort';
-	$regular_line_strips[] = 'Session ended';
-	$regular_line_strips[] = 'or type "new"';
-	$regular_line_strips[] = 'Enter your password';
-	$regular_line_strips[] = 'password you have given';
-	$regular_line_strips[] = 'glad to see you back';
-	$regular_line_strips[] = 'majorMUD';
-	$regular_line_strips[] = 'Please select';
-	$regular_line_strips[] = '...';
-	$regular_line_strips[] = 'Main System Menu';
-	$regular_line_strips[] = 'your selection';
-	$regular_line_strips[] = 'you have selected';
-	$regular_line_strips[] = 'U L T I M A T E';
-	$regular_line_strips[] = '**';
-	$regular_line_strips[] = '(C)ontinue';
-	$regular_line_strips[] = 'WG3NT';
-	$regular_line_strips[] = 'Realm Of Legends';
-	$regular_line_strips[] = '[';
-	$regular_line_strips[] = 'RECOMMENDED';
-	$regular_line_strips[] = 'Last time you were on';
-	$regular_line_strips[] = 'gods have punished';
-	$regular_line_strips[] = '=-=';
-	$regular_line_strips[] = 'You say "';
-	$regular_line_strips[] = 'Combat Engaged';
-	$regular_line_strips[] = 'Combat Off';
-	$regular_line_strips[] = 'Invalid Option';
-	$regular_line_strips[] = 'You are now resting';
-	$regular_line_strips[] = 'You hand over';
-	$regular_line_strips[] = 'wounds are healed';
-	$regular_line_strips[] = 'loudly,';
-	$regular_line_strips[] = 'in the air';
-	$regular_line_strips[] = 'through the air';
-	$regular_line_strips[] = 'sys goto';
-	$regular_line_strips[] = 'You are carrying';
-	$regular_line_strips[] = 'copper farthing';
-	$regular_line_strips[] = 'You have ';
-	$regular_line_strips[] = 'Wealth:';
-	$regular_line_strips[] = 'Encumbrance:';
-	$regular_line_strips[] = 'Top Gangs';
-	$regular_line_strips[] = 'scatters some ashes in a sweeping';
+	$regex_line_strips = array();
+	$regex_line_strips[] = 'TEXTVAR makes a quick grasping gesture.';
+	$regex_line_strips[] = 'You gain NUMVAR experience';
+	$regex_line_strips[] = 'The TEXTVAR falls to the ground.';
+	$regex_line_strips[] = 'You TEXTVAR for NUMVAR damage\!';
+	$regex_line_strips[] = 'You notice TEXTVAR here.';
+	foreach ($regex_line_strips as $text) {
+		$regex = preg_quote($text, "/");
+		$regex = str_replace('TEXTVAR', '[ a-zA-Z0-9\']+', $regex);
+		$regex = str_replace('NUMVAR', '\\d+', $regex);
+		$capture_data = preg_replace("/.*".$regex.".*/", '', $capture_data);
+	}
+	
+	AddStrip(array('Also here:', 'You hear movement ', ' into the room from ', ' just entered the Realm', ' just left the Realm', ' just hung up', ' peeks in from ', 'the server will be shutting', 'nightly "auto-cleanup"', 'Please finish up and log off', 'Software caused connection abort', 'Session ended', 'or type "new"', 'Enter your password', 'password you have given', 'glad to see you back', 'majorMUD', 'Please select', '...', 'Main System Menu', 'your selection', 'you have selected', 'U L T I M A T E', '**', '(C)ontinue', 'WG3NT', 'Realm Of Legends', '[', 'RECOMMENDED', 'Last time you were on', 'gods have punished', '=-=', 'You say "', 'Combat Engaged', 'Combat Off', 'Invalid Option', 'You are now resting', 'You hand over', 'wounds are healed', 'loudly,', 'in the air', 'through the air', 'sys goto', 'You are carrying', 'copper farthing', 'You have ', 'Wealth:', 'Encumbrance:', 'Top Gangs', 'scatters some ashes in a sweeping', 'You are flat on your back!', 'You get back on your feet.', 'You are restrained by silvery manacles!', 'The silvery manacles restraining you shimmer and fade.'));
 	
 	// extra attacks, ignoring for now
 	$regular_line_strips[] = 'Hellfire burns you';
@@ -145,7 +114,10 @@ if (!empty($capture_data)) {
 	//remove blank lines
 	$capture_data = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $capture_data);
 	
-	$attack_found_num = 0;
+	foreach ($between_rounds as $num => $between) {
+		$capture_data = preg_replace("/.*".str_replace('SOURCE', '[ a-zA-Z0-9\']+', preg_quote($between[1], '/')).".*/", 'PARSED_'.$between[0].$num.',0,between', $capture_data);
+	}
+	
 	foreach ($attacks as $num => $attack) {
 		
 		if (!empty($attack[4])) {
@@ -176,7 +148,7 @@ if (!empty($capture_data)) {
 				$unparsed[] = $captured_data_lines[$x];
 			}
 		} else {
-			$captured_data_lines[$x] = preg_replace("/(PARSED_)(.*)/", '$2', $captured_data_lines[$x]);
+			$captured_data_lines[$x] = preg_replace("/PARSED_(.*)/", '$1', $captured_data_lines[$x]);
 		}
 	}
 	$capture_data = implode("\r\n", $captured_data_lines);
