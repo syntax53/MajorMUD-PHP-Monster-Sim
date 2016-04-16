@@ -29,6 +29,11 @@ function AddAttack($name, $type, $energy, $min, $max, $attack_chance, $success_c
 	$attacks[$i]['remaining_energy_yes'] = 0;
 	$attacks[$i]['remaining_energy_no'] = 0;
 	$attacks[$i]['total_damage'] = 0;
+	for ($x = 1; $x <= 6; $x++) {
+		$attacks[$i]['attempt_stats'][$x]['attempts'] = 0;
+		$attacks[$i]['attempt_stats'][$x]['energy'] = 0;
+		$attacks[$i]['attempt_stats'][$x]['damage'] = 0;
+	}
 }
 
 $energy_per_round = 1000;
@@ -220,7 +225,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 					$attacks[$attack_num]['remaining_energy_no'] += $remaining_energy;
 					
 				} else {
-					
+					$attacks[$attack_num]['attempt_stats'][$x]['attempts']++;
 					$attacks[$attack_num]['attempted']++;
 					$attacks[$attack_num]['remaining_energy_yes'] += $remaining_energy;
 					$total_attacks++;
@@ -288,6 +293,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 						if ($attack_hit) {
 							$total_damage += $damage;
 							$round_damage += $damage;
+							$attacks[$attack_num]['attempt_stats'][$x]['damage'] += $damage;
 							
 							$remaining_energy -= $attack['energy'];
 							$energy_stats['total_used'] += $attack['energy'];
@@ -300,11 +306,15 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 					
 					if (!$attack_hit) {		
 						if ($attack['type'] == 'spell') {
-							$energy_stats['total_used'] += round($attack['energy']/2,0);
-							$remaining_energy -= round($attack['energy']/2,0);
+							$energy_used = round($attack['energy']/2,0);
+							
+							$attacks[$attack_num]['attempt_stats'][$x]['energy'] += $energy_used;
+							$energy_stats['total_used'] += $energy_used;
+							$remaining_energy -= $energy_used;
 							
 							p($attack['name'].' ('.($resisted ? 'RESISTED' : 'FAIL').')','Energy used: '.round($attack['energy']/2,0).' ... Energy remaining: '.$remaining_energy);
 						} else {
+							$attacks[$attack_num]['attempt_stats'][$x]['energy'] += $attack['energy'];
 							$energy_stats['total_used'] += $attack['energy'];
 							$remaining_energy -= $attack['energy'];
 							
@@ -316,6 +326,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 				break 1;
 			}
 		}
+		
 		$energy_stats['remaining_per_attack'] += $remaining_energy;
 		$energy_stats['remaining_after_attack'][$x] += $remaining_energy;
 		if ($last_attack['type'] != 'spell') {
@@ -380,6 +391,67 @@ if (!empty($attacks)):
 <h3><span class="red bold">AVG Damage / Round: <?php echo round($total_damage/$number_of_rounds,2); ?></span> ... <span class="red">Max Round Seen: <?php echo $max_round; ?></span></h3>
 Total Rounds: <?php echo $number_of_rounds; ?>, Total Attacks: <?php echo $total_attacks; ?>, Total Damage: <?php echo $total_damage; ?>
 <br><br>
+<table cellpadding="4" cellspacing="0" border="0" class="thinborders">
+<tr>
+	<th>Atmpt</th>
+    <?php for ($x = 1; $x <= 5; $x++): ?>
+    <th>Attack</th>
+    <th>Avg<br>Attempts</th>
+    <th>Avg<br>Energy</th>
+    <th>Avg<br>Damage</th>
+    <?php endfor; ?>
+    <th>Total<br>Attempts</th>
+    <th>Total<br>Energy</th>
+    <th>Total<br>Damage</th>
+</tr>
+<?php 
+$total_attempts = 0; $total_energy = 0; $total_damage = 0;
+for ($x = 1; $x <= 6; $x++):
+	$total_attempts_attempt = 0; $total_energy_attempt = 0; $total_damage_attempt = 0;
+?>
+<tr>
+	<td><span class="bold"><?php echo $x; ?>.</span></td>
+    <?php foreach ($attacks as $num => $attack):
+	if ($num % 2 == 1) { $bgcolor = '#E8E8E8'; } else { $bgcolor = ''; }
+	$total_attempts_attempt += $attack['attempt_stats'][$x]['attempts'];
+	$total_energy_attempt += $attack['attempt_stats'][$x]['energy'];
+	$total_damage_attempt += $attack['attempt_stats'][$x]['damage'];
+	$total_atempts_each[$num] += $attack['attempt_stats'][$x]['attempts'];
+	$total_energy_each[$num] += $attack['attempt_stats'][$x]['energy'];
+	$total_damage_each[$num] += $attack['attempt_stats'][$x]['damage'];
+	$total_attempts += $attack['attempt_stats'][$x]['attempts'];
+	$total_energy += $attack['attempt_stats'][$x]['energy'];
+	$total_damage += $attack['attempt_stats'][$x]['damage'];
+	?>
+    	<td bgcolor="<?php echo $bgcolor; ?>"><?php echo $attack['name']; ?></td>
+    	<td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($attack['attempt_stats'][$x]['attempts']/$number_of_rounds, 2); ?></td>
+        <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($attack['attempt_stats'][$x]['energy']/$number_of_rounds, 2); ?></td>
+        <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($attack['attempt_stats'][$x]['damage']/$number_of_rounds, 2); ?></td>
+    <?php endforeach; ?>
+    <td><?php echo round($total_attempts_attempt/$number_of_rounds, 2); ?></td>
+    <td><?php echo round($total_energy_attempt/$number_of_rounds, 2); ?></td>
+    <td><?php echo round($total_damage_attempt/$number_of_rounds, 2); ?></td>
+</tr>
+<?php endfor; ?>
+<tr>
+	<td><span class="bold">Sum:</span></td>
+    <?php foreach ($attacks as $num => $attack):
+	if ($num % 2 == 1) { $bgcolor = '#E8E8E8'; } else { $bgcolor = ''; }
+	$total_attempts += $attack['attempt_stats'][$x]['attempts'];
+	$total_energy += $attack['attempt_stats'][$x]['energy'];
+	$total_damage += $attack['attempt_stats'][$x]['damage'];
+	?>
+    	<td bgcolor="<?php echo $bgcolor; ?>">&nbsp;</td>
+    	<td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_atempts_each[$num]/$number_of_rounds, 2); ?></td>
+        <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_energy_each[$num]/$number_of_rounds, 2); ?></td>
+        <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_damage_each[$num]/$number_of_rounds, 2); ?></td>
+    <?php endforeach; ?>
+    <td><?php echo round($total_attempts/$number_of_rounds, 2); ?></td>
+    <td><?php echo round($total_energy/$number_of_rounds, 2); ?></td>
+    <td><?php echo round($total_damage/$number_of_rounds, 2); ?></td>
+</tr>
+</table>
+<br><br>
 <?php
 /*$last_cast_percent = 0; 
 foreach ($attacks as $attack) {	
@@ -411,8 +483,9 @@ p('Max Damage Round Seen: '.$max_round);*/
 
 /*p('<h3>'.damage('Total AVG Damage / Round: '.round($total_damage/$number_of_rounds,2)).'</h3>');*/
 	
-p('<strong>Advanced Energy Stats--</strong>');
-foreach ($attacks as $attack) {	
+p('<strong>Additional Energy Stats--</strong>');
+//seems like useless info:
+/*foreach ($attacks as $attack) {	
 	if ($attack['no_energy'] > 0) {
 		p('');
 		p('<span class="bold">'.$attack['name'].'--</span>');
@@ -420,17 +493,18 @@ foreach ($attacks as $attack) {
 		p('Average energy available when attack attempted: '.(round($attack['remaining_energy_yes']/$attack['attempted'], 0)));
 		p('Average energy available when attack could not be attempted: '.(round($attack['remaining_energy_no']/$attack['no_energy'], 0)));
 	}
-}
+}*/
 p('');
 p('Average Energy Used/Attack: '.round($energy_stats['total_used']/$total_attacks,2));
 p('Average Energy Used/Round: '.round($energy_stats['total_used']/$number_of_rounds,2));
 p('Average Energy Remaining/Attack: '.round($energy_stats['remaining_per_attack']/$total_attacks,2));
-p('Average Energy Remaining/Round: '.round($energy_stats['total_remaining']/$number_of_rounds,2));
+p('Average Energy Remaining/Round: '.round($energy_stats['total_remaining']/$number_of_rounds,2)
+	.' (==> Average Energy/Round: '.($energy_per_round + round($energy_stats['total_remaining']/$number_of_rounds,2)).')');
 p('Max Energy Remaining Seen at End of Round: '.$energy_stats['max_remaining']);
 
 p('');
 for ($x = 1; $x <= 6; $x++) {
-	p('Average Energy Remaining after atack '.$x.': '.round($energy_stats['remaining_after_attack'][$x]/$number_of_rounds,2));
+	p('Average Energy Remaining after attack '.$x.': '.round($energy_stats['remaining_after_attack'][$x]/$number_of_rounds,2));
 }
 
 //p('');
