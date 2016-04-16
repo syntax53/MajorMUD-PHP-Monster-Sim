@@ -296,6 +296,7 @@ for ($round = 1; $round <= $number_of_rounds && !empty($attacks); $round++) {
 							$attacks[$attack_num]['attempt_stats'][$x]['damage'] += $damage;
 							
 							$remaining_energy -= $attack['energy'];
+							$attacks[$attack_num]['attempt_stats'][$x]['energy'] += $attack['energy'];
 							$energy_stats['total_used'] += $attack['energy'];
 							
 							$attacks[$attack_num]['hits']++;
@@ -394,7 +395,7 @@ Total Rounds: <?php echo $number_of_rounds; ?>, Total Attacks: <?php echo $total
 <table cellpadding="4" cellspacing="0" border="0" class="thinborders">
 <tr>
 	<th>Atmpt</th>
-    <?php for ($x = 1; $x <= 5; $x++): ?>
+    <?php for ($x = 1; $x <= count($attacks); $x++): ?>
     <th>Attack</th>
     <th>Avg<br>Attempts</th>
     <th>Avg<br>Energy</th>
@@ -427,10 +428,10 @@ for ($x = 1; $x <= 6; $x++):
     	<td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($attack['attempt_stats'][$x]['attempts']/$number_of_rounds, 2); ?></td>
         <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($attack['attempt_stats'][$x]['energy']/$number_of_rounds, 2); ?></td>
         <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($attack['attempt_stats'][$x]['damage']/$number_of_rounds, 2); ?></td>
-    <?php endforeach; ?>
-    <td><?php echo round($total_attempts_attempt/$number_of_rounds, 2); ?></td>
-    <td><?php echo round($total_energy_attempt/$number_of_rounds, 2); ?></td>
-    <td><?php echo round($total_damage_attempt/$number_of_rounds, 2); ?></td>
+    <?php endforeach; if ($bgcolor == '') { $bgcolor = '#E8E8E8'; } else { $bgcolor = ''; } ?>
+    <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_attempts_attempt/$number_of_rounds, 2); ?></td>
+    <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_energy_attempt/$number_of_rounds, 2); ?></td>
+    <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_damage_attempt/$number_of_rounds, 2); ?></td>
 </tr>
 <?php endfor; ?>
 <tr>
@@ -445,10 +446,10 @@ for ($x = 1; $x <= 6; $x++):
     	<td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_atempts_each[$num]/$number_of_rounds, 2); ?></td>
         <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_energy_each[$num]/$number_of_rounds, 2); ?></td>
         <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_damage_each[$num]/$number_of_rounds, 2); ?></td>
-    <?php endforeach; ?>
-    <td><?php echo round($total_attempts/$number_of_rounds, 2); ?></td>
-    <td><?php echo round($total_energy/$number_of_rounds, 2); ?></td>
-    <td><?php echo round($total_damage/$number_of_rounds, 2); ?></td>
+    <?php endforeach; if ($bgcolor == '') { $bgcolor = '#E8E8E8'; } else { $bgcolor = ''; } ?>
+    <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_attempts/$number_of_rounds, 2); ?></td>
+    <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_energy/$number_of_rounds, 2); ?></td>
+    <td bgcolor="<?php echo $bgcolor; ?>"><?php echo round($total_damage/$number_of_rounds, 2); ?></td>
 </tr>
 </table>
 <br><br>
